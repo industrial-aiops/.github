@@ -22,12 +22,12 @@ Unlike the broader IT-ops family ([AIops-tools](https://github.com/AIops-tools))
 
 | Tool | Coverage | Install | Tools |
 |------|----------|---------|:-----:|
-| [**iaiops**](https://github.com/industrial-aiops/industrial-aiops) (0.13.0) | 14 field protocols: OPC-UA · Modbus-TCP/RTU · Siemens S7comm · Mitsubishi MC · Omron FINS · MTConnect · MQTT/Sparkplug B · Allen-Bradley EtherNet/IP · EtherCAT · PROFINET-DCP · **SECS/GEM (semiconductor / display fab)** · BACnet/IP (building) · HART-IP (process) · IO-Link — plus an AI downtime root-cause copilot (`downtime_triage`), conservative baseline learning, ISA-18.2 alarm-flood analysis, historian read-back, a BAS controller layer (Metasys/Niagara REST above BACnet) + an Ignition Gateway MES/SCADA read layer (factory), a legacy PLC program explainer (ST/AWL/L5X), nine per-industry editions (fab / factory / process / building / water / warehouse / clinical / renewables / plcnext) each with its own read-only advisory checks, CSV/SQLite/Parquet export + a Prometheus/Grafana bridge, and 等保2.0/IEC 62443 compliance reporting | `pip install "iaiops[opcua,modbus]"` | 166 (156 read + 10 gated writes) |
-| [**iaiops-energy**](https://github.com/industrial-aiops/industrial-aiops-energy) (0.1.4) | Energy edition (变电/电力), on top of `iaiops.core`: IEC 60870-5-104 · DNP3 · IEC 61850 MMS — read-only substation/RTU/IED monitoring, own MCP server identity + edition skill | `pip install "iaiops-energy[energy]"` | 8 protocol reads + mirrored brain |
+| [**iaiops**](https://github.com/industrial-aiops/industrial-aiops) (0.28.0) | 14 field protocols: OPC-UA · Modbus-TCP/RTU · Siemens S7comm · Mitsubishi MC · Omron FINS · MTConnect · MQTT/Sparkplug B · Allen-Bradley EtherNet/IP · EtherCAT · PROFINET-DCP · **SECS/GEM (semiconductor / display fab)** · BACnet/IP (building) · HART-IP (process) · IO-Link — plus an AI downtime root-cause copilot (`downtime_triage`), conservative baseline learning, ISA-18.2 alarm-flood analysis, historian read-back, a BAS controller layer (Metasys/Niagara REST above BACnet) + an Ignition Gateway MES/SCADA read layer (factory), a legacy PLC program explainer (ST/AWL/L5X), ten per-industry editions (fab / factory / process / building / water / warehouse / clinical / pharma / renewables / plcnext) each with its own read-only advisory checks, a site-survey → collection → measured-OEE path (`iaiops scan` · `readiness` · `collect` · `oee measure` · `case` · `investigate`; MQTT/Sparkplug collectable since 0.28.0), CSV/SQLite/Parquet export + a Prometheus/Grafana bridge, and 等保2.0/IEC 62443 compliance reporting | `pip install "iaiops[opcua,modbus]"` | 196 (183 read + 10 gated device writes + 1 historian write + 2 deprecated aliases) |
+| [**iaiops-energy**](https://github.com/industrial-aiops/industrial-aiops-energy) (0.1.12) | Energy edition (变电/电力), on top of `iaiops.core`: IEC 60870-5-104 · DNP3 · IEC 61850 MMS — read-only substation/RTU/IED monitoring, own MCP server identity + edition skill | `pip install "iaiops-energy[energy]"` | protocol reads + mirrored brain; **0 device writes** |
 
 ### 🧪 Field-testing partners wanted
 
-Everything software-verifiable is verified (in-process servers, real protocol libraries, container loopbacks); what remains on the honest `待核实` list only real equipment can answer — physical Modbus-RTU (RS-485), EtherCAT slaves, HART gateways, live BACnet HVAC, domestic PLCs (汇川/信捷), live PLCnext, live Omron FINS PLCs, IO-Link masters, substation RTUs/IEDs. Verified-equipment reports get credited in the support matrix; features are co-designed via Issues/Discussions. **Start here → [industrial-aiops#28 — Call for field-testing partners (v0.10.0)](https://github.com/industrial-aiops/industrial-aiops/issues/28)** (pinned).
+Everything software-verifiable is verified (in-process servers, real protocol libraries, container loopbacks); what remains on the honest `待核实` list only real equipment can answer — physical Modbus-RTU (RS-485), EtherCAT slaves, HART gateways, live BACnet HVAC, domestic PLCs (汇川/信捷), live PLCnext, live Omron FINS PLCs, IO-Link masters, substation RTUs/IEDs. Verified-equipment reports get credited in the support matrix; features are co-designed via Issues/Discussions. **Start here → [open an issue](https://github.com/industrial-aiops/industrial-aiops/issues/new)** with the protocol and device model in the title.
 
 ### How it works
 
@@ -35,6 +35,7 @@ One package, one **menu-configurable** MCP server. Install only the protocols a 
 
 ```bash
 pip install "iaiops[fab]"     # fab = secsgem + opcua + s7 + modbus
+iaiops onboard status         # which journey is this site on? contacts nothing
 iaiops init                   # interactive setup (encrypts credentials)
 iaiops doctor                 # verify connectivity (classified, not raw errors)
 IAIOPS_MCP=fab iaiops mcp     # run as an MCP server, fab profile
@@ -44,7 +45,7 @@ Since 0.10.0 there is **no default tool exposure**: a bare `iaiops-mcp` prints t
 
 Also on the **[MCP Registry](https://registry.modelcontextprotocol.io)** (`io.github.industrial-aiops/iaiops`, `io.github.industrial-aiops/iaiops-energy`), **PyPI**, and **ClawHub**.
 
-**Edge-native by design.** iaiops rides on a hardened, centrally-managed edge host as a portable, governed *edge application* — mapping onto the [Margo](https://margo.org/) edge-interoperability roles (immutable host · compliant orchestrator · **iaiops = the OT-domain app**), with an optional on-box LLM brain for a fully air-gapped diagnostic path. *Roadmap `⏳`: container image + Margo application description + a published conformance result — **not Margo-compliant yet** (see the repo's `docs/MARGO-ALIGNMENT.md`).*
+**Edge-native by design.** iaiops rides on a hardened, centrally-managed edge host as a portable, governed *edge application* — mapping onto the [Margo](https://margo.org/) edge-interoperability roles (immutable host · compliant orchestrator · **iaiops = the OT-domain app**), with an optional on-box LLM brain for a fully air-gapped diagnostic path. *Shipped: cosign-signed per-profile container images and a signed Margo application package on every release, validated against Margo's published schema in CI. **Not Margo-compliant yet** — there is no conformance result to publish (see the repo's `docs/MARGO-ALIGNMENT.md`).*
 
 > ⚠️ **Honest validation status** — pure analysis, OPC-UA, Modbus-RTU (software serial), BACnet/IP reads, TDengine/IoTDB, DNP3 and IEC-61850 monitor paths are verified against real servers/libraries/containers; live field hardware largely stays `待核实` (see each repo's README). Read-first; never write to a production control system without authorization.
 
@@ -66,12 +67,12 @@ AI agent 做工业运维很在行——直到它对在产 PLC 下了一次写。
 
 | 工具 | 覆盖 | 安装 | 工具数 |
 |------|------|------|:-----:|
-| [**iaiops**](https://github.com/industrial-aiops/industrial-aiops)(0.13.0) | 14 种现场协议:OPC-UA · Modbus-TCP/RTU · 西门子 S7comm · 三菱 MC · 欧姆龙 FINS · MTConnect · MQTT/Sparkplug B · 罗克韦尔 EtherNet/IP · EtherCAT · PROFINET-DCP · **SECS/GEM(半导体/显示面板 fab)** · BACnet/IP(楼宇)· HART-IP(过程仪表)· IO-Link —— 外加 AI 停机根因 copilot（`downtime_triage`）、保守基线学习、ISA-18.2 报警洪泛分析、历史库读回、BAS 控制器层(Metasys/Niagara REST)、Ignition Gateway MES/SCADA 只读、老 PLC 程序讲解(ST/AWL/L5X)、九个按行业版(fab / factory / process / building / water / warehouse / clinical / renewables / plcnext,各带只读、仅建议的行业检查)、CSV/SQLite/Parquet 导出 + Prometheus/Grafana 桥、等保2.0/IEC 62443 合规报告 | `pip install "iaiops[opcua,modbus]"` | 166(156 读 + 10 门控写) |
-| [**iaiops-energy**](https://github.com/industrial-aiops/industrial-aiops-energy)(0.1.4) | 能源版(变电/电力),基于 `iaiops.core`:IEC 60870-5-104 · DNP3 · IEC 61850 MMS —— 变电站 RTU/IED 只读监测,独立 MCP server 身份 + edition skill | `pip install "iaiops-energy[energy]"` | 8 个协议读 + 镜像脑 |
+| [**iaiops**](https://github.com/industrial-aiops/industrial-aiops)(0.28.0) | 14 种现场协议:OPC-UA · Modbus-TCP/RTU · 西门子 S7comm · 三菱 MC · 欧姆龙 FINS · MTConnect · MQTT/Sparkplug B · 罗克韦尔 EtherNet/IP · EtherCAT · PROFINET-DCP · **SECS/GEM(半导体/显示面板 fab)** · BACnet/IP(楼宇)· HART-IP(过程仪表)· IO-Link —— 外加 AI 停机根因 copilot（`downtime_triage`）、保守基线学习、ISA-18.2 报警洪泛分析、历史库读回、BAS 控制器层(Metasys/Niagara REST)、Ignition Gateway MES/SCADA 只读、老 PLC 程序讲解(ST/AWL/L5X)、十个按行业版(fab / factory / process / building / water / warehouse / clinical / pharma / renewables / plcnext,各带只读、仅建议的行业检查)、现场勘察 → 采集 → 实测 OEE 的整条路径(`iaiops scan` · `readiness` · `collect` · `oee measure` · `case` · `investigate`;0.28.0 起 MQTT/Sparkplug 可采集)、CSV/SQLite/Parquet 导出 + Prometheus/Grafana 桥、等保2.0/IEC 62443 合规报告 | `pip install "iaiops[opcua,modbus]"` | 196(183 读 + 10 门控设备写 + 1 历史库写 + 2 待移除别名) |
+| [**iaiops-energy**](https://github.com/industrial-aiops/industrial-aiops-energy)(0.1.12) | 能源版(变电/电力),基于 `iaiops.core`:IEC 60870-5-104 · DNP3 · IEC 61850 MMS —— 变电站 RTU/IED 只读监测,独立 MCP server 身份 + edition skill | `pip install "iaiops-energy[energy]"` | 协议读 + 镜像脑;**零设备写** |
 
 ### 🧪 招募现场测试伙伴
 
-软件里能验证的都验证了(in-process 服务器、真实协议库、容器 loopback);诚实的 `待核实` 清单只有真设备能回答——物理 Modbus-RTU(RS-485)、EtherCAT 从站、HART 网关、在线 BACnet 楼宇设备、国产 PLC(汇川/信捷)、真机 PLCnext、欧姆龙 FINS 真机、IO-Link 主站、变电站 RTU/IED。经你验证的设备会署名写进支持矩阵;功能通过 Issues/Discussions 共创。**参与入口 → [industrial-aiops#28 — 招募现场测试伙伴 (v0.10.0)](https://github.com/industrial-aiops/industrial-aiops/issues/28)**(置顶)。
+软件里能验证的都验证了(in-process 服务器、真实协议库、容器 loopback);诚实的 `待核实` 清单只有真设备能回答——物理 Modbus-RTU(RS-485)、EtherCAT 从站、HART 网关、在线 BACnet 楼宇设备、国产 PLC(汇川/信捷)、真机 PLCnext、欧姆龙 FINS 真机、IO-Link 主站、变电站 RTU/IED。经你验证的设备会署名写进支持矩阵;功能通过 Issues/Discussions 共创。**参与入口 → [新开一个 issue](https://github.com/industrial-aiops/industrial-aiops/issues/new)**,标题写上协议和设备型号。
 
 ### 怎么用
 
@@ -79,6 +80,7 @@ AI agent 做工业运维很在行——直到它对在产 PLC 下了一次写。
 
 ```bash
 pip install "iaiops[fab]"     # fab = secsgem + opcua + s7 + modbus
+iaiops onboard status         # 这个现场走哪条路径?不连任何设备
 iaiops init                   # 交互式设置(加密凭据)
 iaiops doctor                 # 连通自检(给归因结论,不是裸错误)
 IAIOPS_MCP=fab iaiops mcp     # 以 fab profile 跑 MCP server
@@ -88,7 +90,7 @@ IAIOPS_MCP=fab iaiops mcp     # 以 fab profile 跑 MCP server
 
 同时在 **[MCP Registry](https://registry.modelcontextprotocol.io)**(`io.github.industrial-aiops/iaiops`、`io.github.industrial-aiops/iaiops-energy`)、**PyPI**、**ClawHub** 上架。
 
-**边缘原生定位。** iaiops 以**边缘应用(edge application)**的形态跑在加固、集中管理的边缘主机上——对齐 [Margo](https://margo.org/) 工业边缘互操作标准的角色划分(不可变主机 · 合规编排器 · **iaiops = OT 域应用**),并可对接**本机 LLM 脑**实现完全离线(气隙)的诊断路径,数据不出厂。*Roadmap `⏳`:容器镜像 + Margo application description + 公开的 conformance 结果——**目前尚未 Margo-compliant**(见仓库 `docs/MARGO-ALIGNMENT.md`)。*
+**边缘原生定位。** iaiops 以**边缘应用(edge application)**的形态跑在加固、集中管理的边缘主机上——对齐 [Margo](https://margo.org/) 工业边缘互操作标准的角色划分(不可变主机 · 合规编排器 · **iaiops = OT 域应用**),并可对接**本机 LLM 脑**实现完全离线(气隙)的诊断路径,数据不出厂。*已交付:每次发版附 cosign 签名的分 profile 容器镜像与签名的 Margo 应用包,CI 中按 Margo 公开 schema 校验。**目前尚未 Margo-compliant** —— 还没有可公开的 conformance 结果(见仓库 `docs/MARGO-ALIGNMENT.md`)。*
 
 > ⚠️ **诚实验证状态** —— 纯分析、OPC-UA、Modbus-RTU(软件串口)、BACnet/IP 读、TDengine/IoTDB、DNP3 与 IEC-61850 监视路径已对真实服务器/库/容器验证;真实现场硬件大多仍 `待核实`(见各仓库 README)。只读优先;未经授权勿对生产控制系统写入。
 
